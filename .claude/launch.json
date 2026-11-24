@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["--experimental-strip-types", "--no-warnings", "tools/dev.ts", "5173"],
       "port": 5173
+    },
+    {
+      "name": "paper-vault-refuse-join",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["REFUSE_JOIN=1", "node", "--experimental-strip-types", "--no-warnings", "tools/dev.ts", "5174"],
+      "port": 5174
     }
   ]
 }

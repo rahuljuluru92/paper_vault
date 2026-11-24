@@ -141,3 +141,9 @@ Judged on Delightful UX, Polish, Reddit-y and Daily Content. Reddit-y was the th
 - Tested locally: flair on, off and its automatic update after a second run; join; card and feed post at 375x812 and 320x568 with no overflow. Not yet seen on Reddit: whether Reddit lets the app set flair and subscribe in r/paper_vault_dev.
 - Seen on Reddit (player's screenshot): flair shows in gold ("🗝️ 3 jobs"), result comments post from the player's account under the pinned results comment, the feed post shows the date line.
 - Fixed from that screenshot: a Level 4 result was posted under "Results for No. 12 go here". Only results for the post's own daily now reply to the pinned comment; levels and crew vaults played from the post get a comment of their own on it. The local stand-in now behaves like a daily post with a pinned comment, and both cases were checked there.
+
+## 11. The public demo sub
+
+- r/PaperVault (public, created by the developer) runs uploaded versions, not playtest builds: `devvit upload --bump patch`, then `devvit install PaperVault`. After any change, upload and reinstall, or the demo runs old code.
+- First post there (No. 12, The Wandering Teacup) came up from the mod menu with its pinned results comment; a Level 2 result went in as its own comment, as intended.
+- Reddit refused the Join link: `permission not granted for [SUBSCRIBE_TO_SUBREDDIT]`, though it is in `permissions.reddit.asUser` and commenting as the player works. A refusal now logs one warning line and the card drops the link, telling the player to use Reddit's own Join at the top of the sub, instead of "try again later" and a stack trace. `REFUSE_JOIN=1` makes the local stand-in refuse the same way (launch config `paper-vault-refuse-join`); checked there.

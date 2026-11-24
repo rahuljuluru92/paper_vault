@@ -250,7 +250,13 @@ async function flair(body: unknown): Promise<FlairRsp> {
 async function join(): Promise<OkRsp> {
   const {uid} = await who()
   if (!uid) throw new HttpError(401, 'sign in to join')
-  await reddit.subscribeToCurrentSubreddit()
+  try {
+    await reddit.subscribeToCurrentSubreddit()
+  } catch (err) {
+    // Reddit can withhold this permission; the card then points to Reddit's own Join.
+    console.warn(`join refused; ${err}`)
+    throw new HttpError(403, 'join refused')
+  }
   await store.setFlag(uid, 'joined', true)
   return {ok: true}
 }

@@ -75,6 +75,8 @@ type Session = {
 let me: Me = {name: '', signedIn: false, warmedUp: false, quiet: false, flair: false, joined: false, streak: 0, marks: 0}
 let daily: VaultCard | undefined
 let subreddit = ''
+/** Set once Reddit refuses to join for the player, so the card stops offering it. */
+let joinRefused = false
 let sess: Session | undefined
 let watching = 0
 
@@ -465,7 +467,7 @@ function showCard(s: Session, r: Result, thisRun: string): void {
     ${
       me.signedIn && r.saved && !card.mine && subreddit
         ? `<div class="extras"><button id="c-flair" class="link" type="button">${me.flair ? 'Take off flair' : 'Wear it as flair'}</button>${
-            me.joined ? '' : `<button id="c-join" class="link" type="button">Join r/${esc(subreddit)}</button>`
+            me.joined || joinRefused ? '' : `<button id="c-join" class="link" type="button">Join r/${esc(subreddit)}</button>`
           }</div>`
         : ''
     }
@@ -499,8 +501,9 @@ function showCard(s: Session, r: Result, thisRun: string): void {
   joinBtn?.addEventListener('click', async () => {
     joinBtn.disabled = true
     if (!(await post<OkRsp>('/api/join', {}))) {
-      joinBtn.disabled = false
-      return toast('Could not join just now. Try again later.')
+      joinRefused = true
+      joinBtn.remove()
+      return toast(`Reddit would not join for you here. Tap Join at the top of r/${subreddit}.`)
     }
     me.joined = true
     joinBtn.remove()

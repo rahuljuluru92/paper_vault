@@ -49,7 +49,11 @@ rd.submitComment = async (o: {text: string; id: string; runAs?: string}) => (con
 rd.getUserById = async () => ({})
 rd.setUserFlair = async (o: {username: string; text: string}) => console.log(`flair on u/${o.username}: ${o.text}`)
 rd.removeUserFlair = async (_s: string, u: string) => console.log(`flair off u/${u}`)
-rd.subscribeToCurrentSubreddit = async () => console.log("subscribed")
+// REFUSE_JOIN=1 mimics Reddit withholding SUBSCRIBE_TO_SUBREDDIT.
+rd.subscribeToCurrentSubreddit = async () => {
+  if (process.env.REFUSE_JOIN) throw new Error('2 UNKNOWN: permission not granted for [SUBSCRIBE_TO_SUBREDDIT]')
+  console.log("subscribed")
+}
 
 const types: Record<string, string> = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.map': 'application/json'}
 const ctx = (name: string | undefined): Context => ({appName: 'paper-vault', appSlug: 'paper-vault', postId: 't3_dev0', subredditName: 'dev', userId: name ? `t2_${name}` : undefined, username: name, postData: {day: dayNumber(Date.now())}}) as unknown as Context
