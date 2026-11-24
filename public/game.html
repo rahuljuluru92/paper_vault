@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Paper Vault</title>
+    <link rel="preload" href="fonts/caprasimo.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="style.css">
+    <link rel="modulepreload" href="game.js">
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <h1 class="mark">Paper <b>Vault</b></h1>
+        <nav class="tabs" role="tablist" aria-label="Sections">
+          <button role="tab" data-tab="play" aria-selected="true">Tonight</button>
+          <button role="tab" data-tab="shelf" aria-selected="false">Shelf</button>
+          <button role="tab" data-tab="shop" aria-selected="false">Workshop</button>
+        </nav>
+        <button id="b-sound" class="sound" type="button" aria-pressed="true" aria-label="Sound" title="Sound on">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path class="cone" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+            <path class="waves" d="M15.2 9.2a4 4 0 0 1 0 5.6M17.8 6.8a7.5 7.5 0 0 1 0 10.4" />
+            <path class="hush" d="M15.5 9.5l5 5M20.5 9.5l-5 5" />
+          </svg>
+        </button>
+      </header>
+
+      <section id="play" class="view">
+        <div class="plate">
+          <div class="plate-name"><span id="v-name">Unrolling the plans</span><span id="v-by" class="plate-by"></span></div>
+          <div id="v-count" class="plate-count" aria-live="polite"></div>
+        </div>
+        <div id="stage"></div>
+        <p id="hint" role="status"></p>
+        <div id="controls" class="row">
+          <button id="b-undo" class="btn" type="button">Undo</button>
+          <button id="b-wait" class="btn" type="button">Hold</button>
+          <button id="b-run" class="btn gold" type="button" hidden>Run the job</button>
+        </div>
+        <div id="card" hidden></div>
+      </section>
+
+      <section id="shelf" class="view" hidden>
+        <div class="shelf-head">
+          <h2>Levels</h2>
+          <p id="cutters" class="cutters"></p>
+        </div>
+        <div id="tiles"></div>
+        <div class="pager">
+          <button id="p-prev" class="btn small" type="button">Back</button>
+          <p id="p-note"></p>
+          <button id="p-next" class="btn small" type="button">More</button>
+        </div>
+      </section>
+
+      <section id="shop" class="view" hidden>
+        <div class="shop-head">
+          <div><h2>Cut a vault</h2><p class="fine">Crews pay you marks. Fair-but-tricky vaults pay most.</p></div>
+          <button id="e-shuffle" class="btn small" type="button">New sketch</button>
+        </div>
+        <div id="shop-stage"></div>
+        <div class="row tools" role="group" aria-label="Tools">
+          <button class="btn" type="button" data-tool="wall" aria-pressed="true">Wall</button>
+          <button class="btn" type="button" data-tool="guard" aria-pressed="false">Guard</button>
+          <button class="btn" type="button" data-tool="loot" aria-pressed="false">Loot</button>
+          <button class="btn" type="button" data-tool="erase" aria-pressed="false">Erase</button>
+        </div>
+        <p id="verdict" role="status"></p>
+        <div class="namer">
+          <span class="the">The</span>
+          <button id="e-a" class="word" type="button" aria-label="Change first word"></button>
+          <button id="e-b" class="word" type="button" aria-label="Change second word"></button>
+          <button id="e-e" class="emb" type="button" aria-label="Change loot"></button>
+        </div>
+        <div class="row">
+          <button id="e-test" class="btn" type="button">Try it</button>
+          <button id="e-publish" class="btn gold" type="button">Put it on the shelf</button>
+        </div>
+      </section>
+      <div id="toast" role="status"></div>
+    </div>
+    <script src="game.js" type="module"></script>
+  </body>
+</html>
