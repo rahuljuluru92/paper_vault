@@ -38,7 +38,7 @@ const py = (c: number): number => PAD + cy(c) * C + C / 2
 /** Route dash per guard: solid, long dash, dots, dash-dot. */
 const DASH = ['', '26 14', '2 16', '30 12 4 12']
 
-function headShape(i: number, fill: string): string {
+export function headShape(i: number, fill: string): string {
   switch (i % 4) {
     case 0:
       return `<circle cx="0" cy="-30" r="15" fill="${fill}"/>`
@@ -57,7 +57,7 @@ function markShape(i: number, x: number, y: number): string {
   return `<g ${t}>${headShape(i, 'var(--guard-deep)')}</g>`
 }
 
-function guardDoll(i: number): string {
+export function guardDoll(i: number): string {
   return `
     <ellipse cx="0" cy="30" rx="26" ry="7" fill="rgba(20,30,34,.28)"/>
     <g class="doll">
@@ -69,7 +69,7 @@ function guardDoll(i: number): string {
     <g class="lamp"><circle r="11" fill="var(--light)" stroke="var(--ink)" stroke-width="3"/><circle r="4" fill="var(--cream)"/></g>`
 }
 
-const THIEF = `
+export const THIEF = `
   <ellipse cx="0" cy="30" rx="24" ry="7" fill="rgba(20,30,34,.3)"/>
   <path d="M20 22 Q42 18 36 -6" fill="none" stroke="var(--ink)" stroke-width="9" stroke-linecap="round"/>
   <path d="M-21 30 Q-25 -8 0 -10 Q25 -8 21 30 Z" fill="var(--ink)"/>
