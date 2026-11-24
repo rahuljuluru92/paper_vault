@@ -11,6 +11,7 @@ import {createServer} from 'node:http'
 import {extname, join, normalize} from 'node:path'
 import {type Context, reddit, redis, runWithContext} from '@devvit/web/server'
 import {onReq} from '../src/server/server.ts'
+import {dayNumber} from '../src/shared/gen.ts'
 
 const strings = new Map<string, string>()
 const hashes = new Map<string, Map<string, string>>()
@@ -51,7 +52,7 @@ rd.removeUserFlair = async (_s: string, u: string) => console.log(`flair off u/$
 rd.subscribeToCurrentSubreddit = async () => console.log("subscribed")
 
 const types: Record<string, string> = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.map': 'application/json'}
-const ctx = (name: string | undefined): Context => ({appName: 'paper-vault', appSlug: 'paper-vault', postId: 't3_dev0', subredditName: 'dev', userId: name ? `t2_${name}` : undefined, username: name, postData: undefined}) as unknown as Context
+const ctx = (name: string | undefined): Context => ({appName: 'paper-vault', appSlug: 'paper-vault', postId: 't3_dev0', subredditName: 'dev', userId: name ? `t2_${name}` : undefined, username: name, postData: {day: dayNumber(Date.now())}}) as unknown as Context
 
 const server = createServer(async (req, rsp) => {
   const url = new URL(req.url ?? '/', 'http://x')
@@ -72,5 +73,8 @@ const port = Number(process.argv[2] ?? 5173)
 await runWithContext(ctx('dev'), async () => {
   const {seedHouse} = await import('../src/server/store.ts')
   await seedHouse()
+  // The local post behaves like tonight's daily post, with a pinned results comment.
+  const {savePost} = await import('../src/server/store.ts')
+  await savePost('t3_dev0', dayNumber(Date.now()), 't1_pinned')
 })
 server.listen(port, () => console.log(`http://localhost:${port}`))

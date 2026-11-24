@@ -355,7 +355,11 @@ async function share(body: unknown): Promise<ShareRsp> {
   const res = await store.buildResult(v, uid, mine, false, true)
   if (res.shared) throw new HttpError(409, 'already posted')
   const text = shareText(store.toCard(v, uid, mine.length), mine, v.par, res.streak, '  \n')
-  const parent = ((await store.stickyFor(t3)) ?? t3) as T1 | T3
+  // The pinned comment collects results for this post's own daily vault. A level
+  // or a crew vault played from here gets a comment of its own on the post.
+  const postDay = Number((context.postData as {day?: unknown} | undefined)?.day) || 0
+  const sticky = v.day && v.day === postDay ? await store.stickyFor(t3) : undefined
+  const parent = (sticky ?? t3) as T1 | T3
   let comment
   try {
     comment = await reddit.submitComment({id: parent, text, runAs: 'USER'})
