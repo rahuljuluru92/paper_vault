@@ -129,3 +129,13 @@ Section 3 left one hole open: a signed-out player could finish a vault, watch th
 - The card drops the "Ghost line" button when there is no route and says: sign in and your first run counts; then you can watch the ghost line.
 - Tested: the same vault run through `/api/run` signed out (no ghost line, no replays, not saved) and signed in (19-move ghost line, saved, first run). Tonight's vault played signed out in the browser: Ghost stamp, the note, and only the "Yours" button.
 - What is still possible: knowing the target move count before signing in. That alone does not give the route.
+
+## 10. Quick wins for the Game of the Day hackathon
+
+Judged on Delightful UX, Polish, Reddit-y and Daily Content. Reddit-y was the thinnest, and the brief names flair, streaks and a subscribe prompt, so:
+- **Flair, opt-in.** A "Wear it as flair" link on the result card puts the player's record on them as subreddit flair, e.g. "👻 4 ghost lines · 🔥 3 nights · ✂️ 12 marks" (gold, at most 64 characters). It updates after every first run and comes off with "Take off flair". Opt-in because overwriting flair someone chose would be rude. Ghost lines are now counted per player.
+- **Join.** A "Join r/…" link on the result card subscribes the player (their tap, `SUBSCRIBE_TO_SUBREDDIT` as user) and hides itself afterwards.
+- **The feed post** now shows the date and that weekday's difficulty above the vault name ("TUE, NOV 24 · STEADY"), and the player's streak before they play.
+- **Streaks are live:** a stored streak now reads 0 once a night is missed, on the card, the feed post and the flair.
+- Fixed in testing: the join link read "Join r/That is the ghost line…" because the card's subtitle variable shadowed the subreddit name. The long date wrapped to three lines beside the logo at 320 px; it moved above the vault name.
+- Tested locally: flair on, off and its automatic update after a second run; join; card and feed post at 375x812 and 320x568 with no overflow. Not yet seen on Reddit: whether Reddit lets the app set flair and subscribe in r/paper_vault_dev.

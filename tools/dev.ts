@@ -46,6 +46,9 @@ rd.getCurrentUsername = async () => 'dev'
 rd.submitCustomPost = async (o: {title: string}) => (console.log('post:', o.title), {id: `t3_dev${++seq}`, url: '/'})
 rd.submitComment = async (o: {text: string; id: string; runAs?: string}) => (console.log(`comment on ${o.id} as ${o.runAs ?? 'APP'}:\n${o.text}`), {id: `t1_dev${++seq}`, distinguish: async () => {}})
 rd.getUserById = async () => ({})
+rd.setUserFlair = async (o: {username: string; text: string}) => console.log(`flair on u/${o.username}: ${o.text}`)
+rd.removeUserFlair = async (_s: string, u: string) => console.log(`flair off u/${u}`)
+rd.subscribeToCurrentSubreddit = async () => console.log("subscribed")
 
 const types: Record<string, string> = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.map': 'application/json'}
 const ctx = (name: string | undefined): Context => ({appName: 'paper-vault', appSlug: 'paper-vault', postId: 't3_dev0', subredditName: 'dev', userId: name ? `t2_${name}` : undefined, username: name, postData: undefined}) as unknown as Context

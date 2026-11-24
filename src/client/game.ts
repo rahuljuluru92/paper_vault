@@ -5,6 +5,7 @@ import {
   type OkRsp,
   type Result,
   type ShareRsp,
+  type FlairRsp,
   shareText,
   type StartRsp,
   stampFor,
@@ -71,8 +72,9 @@ type Session = {
   flash: string
 }
 
-let me: Me = {name: '', signedIn: false, warmedUp: false, quiet: false, streak: 0, marks: 0}
+let me: Me = {name: '', signedIn: false, warmedUp: false, quiet: false, flair: false, joined: false, streak: 0, marks: 0}
 let daily: VaultCard | undefined
+let subreddit = ''
 let sess: Session | undefined
 let watching = 0
 
@@ -460,6 +462,13 @@ function showCard(s: Session, r: Result, thisRun: string): void {
     </div>
     ${r.runs >= 3 ? `<div><div class="hist" role="img" aria-label="Crews by moves over the ghost line">${bars}</div><div class="hist-axis">${axis}</div></div>` : ''}
     <p class="crowd">${crowd}</p>
+    ${
+      me.signedIn && r.saved && !card.mine && subreddit
+        ? `<div class="extras"><button id="c-flair" class="link" type="button">${me.flair ? 'Take off flair' : 'Wear it as flair'}</button>${
+            me.joined ? '' : `<button id="c-join" class="link" type="button">Join r/${esc(subreddit)}</button>`
+          }</div>`
+        : ''
+    }
     <div class="chips"><span>Watch</span>${r.ghost ? '<button class="chip" type="button" data-w="ghost" aria-pressed="false">Ghost line</button>' : ''}<button class="chip" type="button" data-w="mine" aria-pressed="false">Yours</button>${crews.length ? `<button class="chip" type="button" data-w="crew" aria-pressed="false">Others</button>` : ''}</div>
     <div class="row" id="c-actions">
       <button id="c-copy" class="btn small" type="button">Copy result</button>
@@ -476,6 +485,27 @@ function showCard(s: Session, r: Result, thisRun: string): void {
   $('c-next').addEventListener('click', () => (climbing ? void openLevel(card.level + 1) : show('shelf')))
   const postBtn = document.getElementById('c-post') as HTMLButtonElement | null
   postBtn?.addEventListener('click', () => confirmPost(s, card))
+  const flairBtn = document.getElementById('c-flair') as HTMLButtonElement | null
+  flairBtn?.addEventListener('click', async () => {
+    flairBtn.disabled = true
+    const rsp = await post<FlairRsp>('/api/flair', {on: !me.flair})
+    flairBtn.disabled = false
+    if (!rsp) return toast('Reddit would not change your flair just now. Try again later.')
+    me.flair = !!rsp.text
+    flairBtn.textContent = me.flair ? 'Take off flair' : 'Wear it as flair'
+    toast(me.flair ? `Your flair in r/${subreddit}: ${rsp.text}. It updates after every job.` : 'Flair taken off.')
+  })
+  const joinBtn = document.getElementById('c-join') as HTMLButtonElement | null
+  joinBtn?.addEventListener('click', async () => {
+    joinBtn.disabled = true
+    if (!(await post<OkRsp>('/api/join', {}))) {
+      joinBtn.disabled = false
+      return toast('Could not join just now. Try again later.')
+    }
+    me.joined = true
+    joinBtn.remove()
+    toast(`Joined r/${subreddit}. Tomorrow's vault will turn up in your feed.`)
+  })
   for (const chip of cardEl.querySelectorAll<HTMLButtonElement>('.chip'))
     chip.addEventListener('click', async () => {
       let moves = chip.dataset.w === 'ghost' ? r.ghost : r.moves
@@ -678,6 +708,7 @@ async function main(): Promise<void> {
   setSound(!me.quiet)
   paintSound()
   daily = rsp.daily
+  subreddit = rsp.sub
   if (!me.warmedUp && !daily.my) openWarm()
   else await openVault(daily)
   if (rsp.todayUrl && daily.day < rsp.today) toast(`This is an older vault. No. ${rsp.today} is out tonight.`)

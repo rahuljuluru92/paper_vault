@@ -177,6 +177,18 @@ export function dayNumber(nowMs: number): number {
   return Math.max(1, Math.floor((nowMs - EPOCH_MS) / 86_400_000) + 1)
 }
 
+/** The UTC date vault No. `day` opened, e.g. "Sun, Nov 23". */
+export function dayLabel(day: number): string {
+  return new Date(EPOCH_MS + (day - 1) * 86_400_000).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+export const TIER_WORDS = ['gentle', 'steady', 'tricky', 'fiendish'] as const
+
 /** Monday is gentle, the weekend bites. */
 export function tierForDay(day: number): Tier {
   const weekday = new Date(EPOCH_MS + (day - 1) * 86_400_000).getUTCDay()

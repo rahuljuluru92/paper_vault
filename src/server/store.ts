@@ -9,7 +9,7 @@
  *   rz:{vid}       zset   uid scored by move count, for replays (expires)
  *   h:{vid}        hash   moves over the ghost line -> crews
  *   rep:{vid}      zset   uids who reported the vault
- *   u:{uid}        hash   name, streak, last daily, warm-up flag, sound-off flag (expires)
+ *   u:{uid}        hash   name, streak, last daily, warm-up flag, ghost count, sound-off / flair-on / joined flags (expires)
  *   u:{uid}:ran    zset   vault ids the player has a job on (expires)
  *   users          zset   uid scored by last seen, for the deleted-account sweep
  *   cutters        zset   uid scored by designer marks
@@ -30,7 +30,7 @@ import {
   type VaultCard,
 } from '../shared/api.ts'
 import {encodeVault} from '../shared/engine.ts'
-import {dailyVault, generate, type Label, labelForSeed, type Made, type Tier} from '../shared/gen.ts'
+import {dailyVault, dayNumber, generate, type Label, labelForSeed, type Made, type Tier} from '../shared/gen.ts'
 
 const DAY_S = 86_400
 const RUN_TTL = 120 * DAY_S
@@ -202,14 +202,17 @@ export async function touchUser(uid: string, name: string): Promise<void> {
 }
 
 export async function getMe(uid: string | undefined, name: string | undefined): Promise<Me> {
-  if (!uid) return {name: '', signedIn: false, warmedUp: false, quiet: false, streak: 0, marks: 0}
+  if (!uid)
+    return {name: '', signedIn: false, warmedUp: false, quiet: false, flair: false, joined: false, streak: 0, marks: 0}
   const [h, marks] = await Promise.all([redis.hGetAll(`u:${uid}`), redis.zScore('cutters', uid)])
   return {
     name: name ?? h.name ?? '',
     signedIn: true,
     warmedUp: h.warm === '1',
     quiet: h.quiet === '1',
-    streak: Number(h.streak ?? 0),
+    flair: h.flair === '1',
+    joined: h.joined === '1',
+    streak: liveStreak(h),
     marks: Math.round(marks ?? 0),
   }
 }
@@ -219,9 +222,31 @@ export async function setWarmedUp(uid: string): Promise<void> {
   await redis.expire(`u:${uid}`, USER_TTL)
 }
 
-export async function setQuiet(uid: string, quiet: boolean): Promise<void> {
-  await redis.hSet(`u:${uid}`, {quiet: quiet ? '1' : '0'})
+/** A stored streak counts only while the last daily job was today or last night. */
+function liveStreak(h: Record<string, string>): number {
+  return Number(h.last ?? 0) >= dayNumber(Date.now()) - 1 ? Number(h.streak ?? 0) : 0
+}
+
+/** One of the player's on/off choices: sound off, flair on, joined. */
+export async function setFlag(uid: string, key: 'quiet' | 'flair' | 'joined', on: boolean): Promise<void> {
+  await redis.hSet(`u:${uid}`, {[key]: on ? '1' : '0'})
   await redis.expire(`u:${uid}`, USER_TTL)
+}
+
+/** The player's record in a few words, for subreddit flair (at most 64 characters). */
+export async function flairText(uid: string): Promise<string> {
+  const [h, jobs, marks] = await Promise.all([
+    redis.hGetAll(`u:${uid}`),
+    redis.zCard(`u:${uid}:ran`),
+    redis.zScore('cutters', uid),
+  ])
+  const ghosts = Number(h.ghosts ?? 0)
+  const streak = liveStreak(h)
+  const cut = Math.round(marks ?? 0)
+  const parts = [ghosts ? `👻 ${ghosts} ghost line${ghosts === 1 ? '' : 's'}` : `🗝️ ${jobs} job${jobs === 1 ? '' : 's'}`]
+  if (streak > 1) parts.push(`🔥 ${streak} nights`)
+  if (cut) parts.push(`✂️ ${cut} marks`)
+  return parts.join(' · ').slice(0, 64)
 }
 
 export async function myMovesOn(uid: string | undefined, vid: string): Promise<string | undefined> {
@@ -254,6 +279,7 @@ export async function recordRun(
     redis.hIncrBy(`h:${v.id}`, `${over}`, 1),
     redis.hIncrBy(`v:${v.id}`, 'runs', 1),
     ghost ? redis.hIncrBy(`v:${v.id}`, 'ghosts', 1) : Promise.resolve(0),
+    ghost ? redis.hIncrBy(`u:${uid}`, 'ghosts', 1) : Promise.resolve(0),
     redis.zAdd(`u:${uid}:ran`, {member: v.id, score: now}),
   ])
   await Promise.all([
@@ -316,7 +342,7 @@ export async function buildResult(
     saved,
     hist,
     runs,
-    streak: Number(user.streak ?? 0),
+    streak: liveStreak(user),
     replays,
     shared: !!(uid && user[`s:${v.id}`]),
   }

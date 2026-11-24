@@ -12,6 +12,7 @@ import type {
 } from '@devvit/web/shared'
 import {
   type ErrorRsp,
+  type FlairRsp,
   type InitRsp,
   type OkRsp,
   type PublishRsp,
@@ -49,6 +50,8 @@ const routes: {[key: string]: Handler} = {
   'POST /api/result': result,
   'POST /api/warm': warm,
   'POST /api/sound': sound,
+  'POST /api/flair': flair,
+  'POST /api/join': join,
   'POST /api/publish': publish,
   'POST /api/vault/delete': removeVault,
   'POST /api/vault/report': report,
@@ -116,6 +119,7 @@ async function init(): Promise<InitRsp> {
     daily: store.toCard(v, uid, mine?.length),
     todayUrl: latest ? `https://www.reddit.com/comments/${latest.replace('t3_', '')}` : undefined,
     canPostAsUser: !!uid,
+    sub: context.subredditName ?? '',
   }
 }
 
@@ -156,6 +160,7 @@ async function run(body: unknown): Promise<Result> {
     await store.touchUser(uid, name)
     first = await store.recordRun(v, uid, name, req.moves, today())
     if (!first) recorded = (await store.myMovesOn(uid, v.id)) ?? req.moves
+    if (first && (await store.getMe(uid, name)).flair) await wearFlair(uid, name)
   }
   if (req.journeyId) {
     try {
@@ -199,7 +204,54 @@ async function warm(): Promise<OkRsp> {
 
 async function sound(body: unknown): Promise<OkRsp> {
   const {uid} = await who()
-  if (uid) await store.setQuiet(uid, field(body, 'quiet') === true)
+  if (uid) await store.setFlag(uid, 'quiet', field(body, 'quiet') === true)
+  return {ok: true}
+}
+
+/** Puts the player's record on them as subreddit flair. Returns the text, or '' if Reddit refused. */
+async function wearFlair(uid: T2, name: string): Promise<string> {
+  const text = await store.flairText(uid)
+  try {
+    await reddit.setUserFlair({
+      subredditName: context.subredditName!,
+      username: name,
+      text,
+      backgroundColor: '#f2b22e',
+      textColor: 'dark',
+    })
+    return text
+  } catch (err) {
+    console.warn(`flair failed; ${err}`)
+    return ''
+  }
+}
+
+/** Flair is opt-in: the player turns it on from the result card, and can take it off. */
+async function flair(body: unknown): Promise<FlairRsp> {
+  const {uid, name} = await who()
+  if (!uid || !name || !context.subredditName) throw new HttpError(401, 'sign in for flair')
+  const on = field(body, 'on') === true
+  if (!on) {
+    await store.setFlag(uid, 'flair', false)
+    try {
+      await reddit.removeUserFlair(context.subredditName, name)
+    } catch (err) {
+      console.warn(`flair removal failed; ${err}`)
+    }
+    return {text: ''}
+  }
+  const text = await wearFlair(uid, name)
+  if (!text) throw new HttpError(502, 'flair refused')
+  await store.setFlag(uid, 'flair', true)
+  return {text}
+}
+
+/** Joining is always the player's tap; Reddit subscribes them as themselves. */
+async function join(): Promise<OkRsp> {
+  const {uid} = await who()
+  if (!uid) throw new HttpError(401, 'sign in to join')
+  await reddit.subscribeToCurrentSubreddit()
+  await store.setFlag(uid, 'joined', true)
   return {ok: true}
 }
 

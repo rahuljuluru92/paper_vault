@@ -55,6 +55,11 @@ export type Me = {
   warmedUp: boolean
   /** True if the player switched sound off. */
   quiet: boolean
+  /** True if the player chose to wear their record as subreddit flair. */
+  flair: boolean
+  /** True once the player joined the subreddit from the result card. */
+  joined: boolean
+  /** Nights in a row with a daily job; 0 once a night is missed. */
   streak: number
   marks: number
 }
@@ -66,7 +71,12 @@ export type InitRsp = {
   /** Set when this post holds an older vault and today's lives elsewhere. */
   todayUrl: string | undefined
   canPostAsUser: boolean
+  /** The subreddit this post lives in, without "r/". */
+  sub: string
 }
+
+/** The flair text now on the player, or empty once it is taken off. */
+export type FlairRsp = {text: string}
 
 export type Cutter = {name: string; marks: number}
 
